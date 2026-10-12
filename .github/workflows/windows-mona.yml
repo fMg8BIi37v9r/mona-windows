@@ -22,10 +22,10 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Setup WSL (Ubuntu)
+      - name: Setup WSL (Ubuntu 24.04)
         uses: Vampire/setup-wsl@v3
         with:
-          distribution: Ubuntu
+          distribution: Ubuntu-24.04
           set-as-default: true
 
       - name: Jalankan Mona Universal Binary
