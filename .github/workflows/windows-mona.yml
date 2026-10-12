@@ -34,15 +34,18 @@ jobs:
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           CLOUDFLARE_TOKEN: ${{ secrets.CLOUDFLARE_TOKEN }}
           SHELL_CHOICE: ${{ inputs.shell_choice }}
-        shell: bash
+        shell: wsl-bash {0}
         run: |
           echo "=================================================="
           echo "    MEMULAI MONA DI WINDOWS GITHUB ACTIONS        "
           echo "=================================================="
 
-          # 1. Siapkan direktori kerja di C:\mona
+          # 1. Dapatkan path workspace di Linux WSL
+          WS_PATH=$(wslpath -u "$GITHUB_WORKSPACE")
+
+          # 2. Siapkan direktori kerja di C:\mona
           mkdir -p /mnt/c/mona
-          cp -f "$GITHUB_WORKSPACE/mona" /mnt/c/mona/mona
+          cp -f "$WS_PATH/mona" /mnt/c/mona/mona
           chmod +x /mnt/c/mona/mona
 
           # 2. Tentukan Shell sesuai pilihan input workflow
