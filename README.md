@@ -8,3 +8,4 @@ Sistem All-in-One: **Web Terminal (Tmux)** + **File Browser** + **Dual Cloudflar
 3. Klik **Run workflow**, pilih shell yang Anda inginkan (rekomendasi: **`powershell`**).
 4. Klik tombol hijau **Run workflow**.
 5. Link akses Web Terminal dan File Browser akan langsung dikirim ke Telegram Bot Anda!
+
