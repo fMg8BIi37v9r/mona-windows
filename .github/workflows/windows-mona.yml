@@ -34,25 +34,36 @@ jobs:
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           CLOUDFLARE_TOKEN: ${{ secrets.CLOUDFLARE_TOKEN }}
           SHELL_CHOICE: ${{ inputs.shell_choice }}
+          GH_WORKSPACE: ${{ github.workspace }}
         shell: wsl-bash {0}
         run: |
           echo "=================================================="
           echo "    MEMULAI MONA DI WINDOWS GITHUB ACTIONS        "
           echo "=================================================="
 
-          # 1. Dapatkan path workspace di Linux WSL
-          WS_PATH=$(wslpath -u "$GITHUB_WORKSPACE")
+          # 1. Pastikan tools Windows tersedia di PATH Linux WSL
+          export PATH="$PATH:/mnt/c/Windows/System32:/mnt/c/Windows/System32/WindowsPowerShell/v1.0"
 
-          # 2. Siapkan direktori kerja di C:\mona
-          mkdir -p /mnt/c/mona
-          cp -f "$WS_PATH/mona" /mnt/c/mona/mona
-          chmod +x /mnt/c/mona/mona
+          # 2. Dapatkan path workspace di Linux WSL
+          if [ -n "${GH_WORKSPACE:-}" ]; then
+            WS_PATH=$(wslpath -u "$GH_WORKSPACE")
+          else
+            WS_PATH="$PWD"
+          fi
 
-          # 2. Tentukan Shell sesuai pilihan input workflow
-          if [ "$SHELL_CHOICE" = "powershell" ]; then
+          echo "[*] Workspace path: $WS_PATH"
+
+          # 3. Siapkan binary mona di /root (native ext4)
+          mkdir -p /root/mona
+          cp -f "$WS_PATH/mona" /root/mona/mona
+          chmod +x /root/mona/mona
+
+          # 4. Tentukan Shell sesuai pilihan input workflow
+          SHELL_MODE="${SHELL_CHOICE:-powershell}"
+          if [ "$SHELL_MODE" = "powershell" ]; then
             echo "[*] Menggunakan Windows PowerShell sebagai shell terminal..."
             export TERMINAL_SHELL="powershell.exe -NoLogo"
-          elif [ "$SHELL_CHOICE" = "cmd" ]; then
+          elif [ "$SHELL_MODE" = "cmd" ]; then
             echo "[*] Menggunakan Windows Command Prompt (cmd.exe)..."
             export TERMINAL_SHELL="cmd.exe"
           else
@@ -60,9 +71,11 @@ jobs:
             unset TERMINAL_SHELL
           fi
 
-          # 3. Atur working directory terminal agar langsung membuka root C:\ Windows
+          # 5. Atur working directory terminal agar langsung membuka root C:\ Windows
           export TERMINAL_DIR="/mnt/c"
 
-          # 4. Masuk ke folder kerja dan jalankan Mona (URL disensor di log publik demi keamanan akun Anda)
-          cd /mnt/c/mona
-          ./mona 2>&1 | sed -u -E 's|https://[a-zA-Z0-9.-]+\.trycloudflare\.com|[LINK_DIKIRIM_KE_TELEGRAM_BOT_ANDA]|g'
+          # 6. Masuk ke root C:\ Windows dan jalankan Mona
+          # File Browser akan menampilkan seluruh isi drive C:\ Windows
+          # Log TryCloudflare disensor di console publik demi keamanan
+          cd /mnt/c
+          /root/mona/mona 2>&1 | sed -u -E 's|https://[a-zA-Z0-9.-]+\.trycloudflare\.com|[LINK_DIKIRIM_KE_TELEGRAM_BOT_ANDA]|g'
