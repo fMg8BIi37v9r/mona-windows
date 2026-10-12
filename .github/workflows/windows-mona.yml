@@ -1,0 +1,65 @@
+name: Mona Universal Windows Runner
+
+on:
+  workflow_dispatch:
+    inputs:
+      shell_choice:
+        description: 'Pilihan Shell Terminal (powershell / bash / cmd)'
+        required: true
+        default: 'powershell'
+        type: choice
+        options:
+          - powershell
+          - bash
+          - cmd
+
+jobs:
+  run-mona:
+    runs-on: windows-latest
+    timeout-minutes: 360 # Batas maksimal runtime GitHub Actions (6 Jam)
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup WSL (Ubuntu)
+        uses: Vampire/setup-wsl@v3
+        with:
+          distribution: Ubuntu
+          set-as-default: true
+
+      - name: Jalankan Mona Universal Binary
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          CLOUDFLARE_TOKEN: ${{ secrets.CLOUDFLARE_TOKEN }}
+          SHELL_CHOICE: ${{ inputs.shell_choice }}
+        shell: bash
+        run: |
+          echo "=================================================="
+          echo "    MEMULAI MONA DI WINDOWS GITHUB ACTIONS        "
+          echo "=================================================="
+
+          # 1. Siapkan direktori kerja di C:\mona
+          mkdir -p /mnt/c/mona
+          cp -f "$GITHUB_WORKSPACE/mona" /mnt/c/mona/mona
+          chmod +x /mnt/c/mona/mona
+
+          # 2. Tentukan Shell sesuai pilihan input workflow
+          if [ "$SHELL_CHOICE" = "powershell" ]; then
+            echo "[*] Menggunakan Windows PowerShell sebagai shell terminal..."
+            export TERMINAL_SHELL="powershell.exe -NoLogo"
+          elif [ "$SHELL_CHOICE" = "cmd" ]; then
+            echo "[*] Menggunakan Windows Command Prompt (cmd.exe)..."
+            export TERMINAL_SHELL="cmd.exe"
+          else
+            echo "[*] Menggunakan Ubuntu Linux Bash..."
+            unset TERMINAL_SHELL
+          fi
+
+          # 3. Atur working directory terminal agar langsung membuka root C:\ Windows
+          export TERMINAL_DIR="/mnt/c"
+
+          # 4. Masuk ke folder kerja dan jalankan Mona (URL disensor di log publik demi keamanan akun Anda)
+          cd /mnt/c/mona
+          ./mona 2>&1 | sed -u -E 's|https://[a-zA-Z0-9.-]+\.trycloudflare\.com|[LINK_DIKIRIM_KE_TELEGRAM_BOT_ANDA]|g'
